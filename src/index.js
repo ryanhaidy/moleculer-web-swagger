@@ -9,7 +9,7 @@ const _ = require("lodash");
 const yaml = require("js-yaml");
 const fs = require("fs");
 const path = require("path");
-const fastify = require('fastify');
+const fastify = require("fastify");
 const swaggerSpecification = require("./specification.json");
 
 /**
@@ -29,13 +29,13 @@ module.exports = {
 		port: process.env.PORT || 3002,
 
 		// Exposed IP
-    ip: process.env.IP || "0.0.0.0",
+		ip: process.env.IP || "0.0.0.0",
 
-    // is Expose swagger
-    expose: true,
+		// is Expose swagger
+		expose: true,
     
-    // Swagger Specification
-    swagger: {},
+		// Swagger Specification
+		swagger: {},
 
 		// Routes
 		routes: []
@@ -45,15 +45,15 @@ module.exports = {
 	 * Service created lifecycle event handler
 	 */
 	created() {
-    if (this.settings.expose === false) return;
+		if (this.settings.expose === false) return;
 
-    this.settings.swagger = Object.assign(swaggerSpecification, this.settings.swagger);
+		this.settings.swagger = Object.assign(swaggerSpecification, this.settings.swagger);
 
-    this.server = fastify();
-    this.server.register(require('fastify-static'), {
-      root: path.join(__dirname, '../static'),
-      prefix: '/', // optional: default '/'
-    });
+		this.server = fastify();
+		this.server.register(require("fastify-static"), {
+			root: path.join(__dirname, "../static"),
+			prefix: "/", // optional: default '/'
+		});
 	},
 
 	actions: {
@@ -68,39 +68,39 @@ module.exports = {
 		 * @returns {Object}
 		 */
 		createSwagger(opts) {
-      if (this.settings.swaggerCache) {
-        return this.settings.swaggerCache;
-      }
+			if (this.settings.swaggerCache) {
+				return this.settings.swaggerCache;
+			}
 
-      let swaggerObject = swaggerSpecification
+			let swaggerObject = swaggerSpecification;
 
-      // reset
-      swaggerObject.tags = [];
-      swaggerObject.paths = {};
+			// reset
+			swaggerObject.tags = [];
+			swaggerObject.paths = {};
 
-      if (swaggerObject.info.title === '') {
-        const pkg = JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json')));
-        swaggerObject.info.title = pkg.name;
-      }
+			if (swaggerObject.info.title === "") {
+				const pkg = JSON.parse(fs.readFileSync(path.join(__dirname, "package.json")));
+				swaggerObject.info.title = pkg.name;
+			}
 
-      for (let opt of opts) {
-        Object.assign(swaggerObject.paths, this.createSwaggerPath(opt));
-      }
+			for (let opt of opts) {
+				Object.assign(swaggerObject.paths, this.createSwaggerPath(opt));
+			}
 
-      delete swaggerObject.consumes;
-      delete swaggerObject.produces;
-      this.settings.swaggerCache = swaggerObject;
+			delete swaggerObject.consumes;
+			delete swaggerObject.produces;
+			this.settings.swaggerCache = swaggerObject;
 
 			return swaggerObject;
-    },
+		},
     
 		createSwaggerPath(opts) {    
-      this.logger.info(`add '${opts.path}' to swagger`);
+			this.logger.info(`add '${opts.path}' to swagger`);
 
-      let route = {
+			let route = {
 				opts,
 				middlewares: []
-      };
+			};
 
 			if (opts.authorization) {
 				if (!_.isFunction(this.authorize)) {
@@ -129,48 +129,48 @@ module.exports = {
 					const p = matchPath.split(/\s+/);
 					method = p[0];
 					matchPath = p[1];
-        }
+				}
 				if (matchPath.startsWith("/")) matchPath = matchPath.slice(1);
 
-        this.logger.info(`add to swagger: ${method} ${route.path + (route.path.endsWith("/") ? "": "/")}${matchPath}`);
-        let swaggerPath = {
-          [`${route.path + (route.path.endsWith("/") ? "": "/")}${matchPath}`]: {
-            [method.toLowerCase()]: {
-              tags: [],
-              summary: "",
-              description: "",
-              operationId: "",
-              consumes: this.settings.swagger.consumes || [
-                "application/json",
-                "application/xml"
-              ],
-              produces: this.settings.swagger.produces || [
-                "application/xml",
-                "application/json"
-              ],
-              parameters: [{
-                in: "body",
-                name: "body",
-                description: "",
-                required: true,
-                schema: {}
-              }],
-              responses: {
-                200: {
-                  description: "success"
-                }
-              },
-              security: [{
-                jwt: []
-              }]
-            }
-          }
-        };
+				this.logger.info(`add to swagger: ${method} ${route.path + (route.path.endsWith("/") ? "": "/")}${matchPath}`);
+				let swaggerPath = {
+					[`${route.path + (route.path.endsWith("/") ? "": "/")}${matchPath}`]: {
+						[method.toLowerCase()]: {
+							tags: [],
+							summary: "",
+							description: "",
+							operationId: "",
+							consumes: this.settings.swagger.consumes || [
+								"application/json",
+								"application/xml"
+							],
+							produces: this.settings.swagger.produces || [
+								"application/xml",
+								"application/json"
+							],
+							parameters: [{
+								in: "body",
+								name: "body",
+								description: "",
+								required: true,
+								schema: {}
+							}],
+							responses: {
+								200: {
+									description: "success"
+								}
+							},
+							security: [{
+								jwt: []
+							}]
+						}
+					}
+				};
 
 				return swaggerPath;
 			};
 
-      let paths = {};
+			let paths = {};
 			// Handle aliases
 			if (opts.aliases && Object.keys(opts.aliases).length > 0) {
 				route.aliases = [];
@@ -179,7 +179,7 @@ module.exports = {
 						const p = matchPath.split(/\s+/);
 						const pathName = p[1];
 
-            // Generate RESTful API. More info http://www.restapitutorial.com/
+						// Generate RESTful API. More info http://www.restapitutorial.com/
 						Object.assign(paths, createPath(`GET ${pathName}/:id`));
 						Object.assign(paths, createPath(`POST ${pathName}`));
 						Object.assign(paths, createPath(`PUT ${pathName}/:id`));
@@ -188,48 +188,48 @@ module.exports = {
 					} else {
 						Object.assign(paths, createPath(matchPath));
 					}
-				};
+				}
 			}
 
 			return paths;
-    }
+		}
 	},
 
 	/**
 	 * Service started lifecycle event handler
 	 */
 	started() {
-    if (this.settings.middleware) return;
+		if (this.settings.middleware) return;
 
-    // Process routes
+		// Process routes
 		if (Array.isArray(this.settings.routes)) {
-      this.swagger = this.createSwagger(this.settings.routes);
+			this.swagger = this.createSwagger(this.settings.routes);
 		}
 
-    this.server.get("/", (req, res) => {
-      res.sendFile('index.html');
-    });
+		this.server.get("/", (req, res) => {
+			res.sendFile("index.html");
+		});
     
-    this.server.get("/yml", (req, res) => {
-      res.type('application/x-yaml');
-      res.send(yaml.safeDump(this.settings.swaggerCache, { skipInvalid: true }));
-    });
+		this.server.get("/yml", (req, res) => {
+			res.type("application/x-yaml");
+			res.send(yaml.safeDump(this.settings.swaggerCache, { skipInvalid: true }));
+		});
 
-    this.server.get("/json", (req, res) => {
-      res.send(this.settings.swaggerCache);
-    });
+		this.server.get("/json", (req, res) => {
+			res.send(this.settings.swaggerCache);
+		});
 
-    this.server.listen(this.settings.port, (err, address) => {
-      if (err) throw err;
+		this.server.listen(this.settings.port, this.settings.ip, (err, address) => {
+			if (err) throw err;
 			this.logger.info(`Swagger listening on ${address}`);
-    });
+		});
 	},
 
 	/**
 	 * Service stopped lifecycle event handler
 	 */
 	stopped() {
-    if (this.timer) {
+		if (this.timer) {
 			clearInterval(this.timer);
 			this.timer = null;
 		}
