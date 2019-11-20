@@ -74,6 +74,9 @@ module.exports = {
 
 			let swaggerObject = swaggerSpecification;
 
+			// store paths configuration
+			swaggerObject.tempPaths = swaggerObject.paths;
+
 			// reset
 			swaggerObject.tags = [];
 			swaggerObject.paths = {};
@@ -94,7 +97,7 @@ module.exports = {
 			return swaggerObject;
 		},
     
-		createSwaggerPath(opts) {    
+		createSwaggerPath(opts) {  
 			this.logger.info(`add '${opts.path}' to swagger`);
 
 			let route = {
@@ -106,7 +109,7 @@ module.exports = {
 				if (!_.isFunction(this.authorize)) {
 					this.logger.warn("Define 'authorize' method in the service to enable authorization.");
 					route.authorization = false;
-				} else
+				} else 
 					route.authorization = true;
 			}
 			if (opts.authentication) {
@@ -133,13 +136,17 @@ module.exports = {
 				if (matchPath.startsWith("/")) matchPath = matchPath.slice(1);
 
 				this.logger.info(`add to swagger: ${method} ${route.path + (route.path.endsWith("/") ? "": "/")}${matchPath}`);
+				
+				const pathParent = this.settings.swagger.tempPaths[`${route.path + (route.path.endsWith("/") ? "": "/")}${matchPath}`] || {};
+				const path = pathParent[method.toLowerCase()] || {};
+
 				let swaggerPath = {
 					[`${route.path + (route.path.endsWith("/") ? "": "/")}${matchPath}`]: {
 						[method.toLowerCase()]: {
-							tags: [],
-							summary: "",
-							description: "",
-							operationId: "",
+							tags: path.tags || [],
+							summary: path.summary || "",
+							description: path.description || "",
+							operationId: path.operationId || "",
 							consumes: this.settings.swagger.consumes || [
 								"application/json",
 								"application/xml"
@@ -148,13 +155,7 @@ module.exports = {
 								"application/xml",
 								"application/json"
 							],
-							parameters: [{
-								in: "body",
-								name: "body",
-								description: "",
-								required: true,
-								schema: {}
-							}],
+							parameters: path.parameters,
 							responses: {
 								200: {
 									description: "success"
@@ -219,7 +220,7 @@ module.exports = {
 			res.send(this.settings.swaggerCache);
 		});
 
-		this.server.listen(this.settings.port, this.settings.ip, (err, address) => {
+		this.server.listen(this.settings.port, (err, address) => {
 			if (err) throw err;
 			this.logger.info(`Swagger listening on ${address}`);
 		});
