@@ -220,7 +220,7 @@ module.exports = {
 			res.send(this.settings.swaggerCache);
 		});
 
-		this.server.listen(this.settings.port, (err, address) => {
+		this.server.listen(this.settings.port, this.settings.ip, (err, address) => {
 			if (err) throw err;
 			this.logger.info(`Swagger listening on ${address}`);
 		});
